@@ -1,0 +1,17 @@
+{
+  "name": "Ontdek Friesland",
+  "short_name": "Friesland",
+  "description": "Kaart van Friesland met musea, natuur, steden en wandelroutes. Vink af wat je hebt bezocht en plan je uitjes.",
+  "lang": "nl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b4ea2",
+  "theme_color": "#0b4ea2",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

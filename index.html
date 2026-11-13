@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ontdek Friesland</title>
+<meta name="description" content="Interactieve kaart van Friesland: musea, natuur, steden, wandelroutes en meer. Vink af wat je hebt bezocht en plan je uitjes.">
+<meta name="theme-color" content="#0b4ea2">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="vendor/markercluster/MarkerCluster.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body data-screen="kaart" data-side="lijst">
+
+<aside id="side" aria-label="Lijst, planning en instellingen">
+  <header class="brand">
+    <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="20" fill="#fff"/><path d="M20 32s-11-7.2-11-15.3A6 6 0 0 1 20 13a6 6 0 0 1 11 3.7C31 24.8 20 32 20 32z" fill="#d8232a"/></svg>
+    <div class="brand-text">
+      <h1>Ontdek Friesland</h1>
+      <p id="brandProgress">Van terp en toren tot wad en wandelpad</p>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Onderdelen">
+    <button type="button" data-act="go" data-go="lijst" class="tab">Ontdek</button>
+    <button type="button" data-act="go" data-go="plan" class="tab">Planning <span class="count" id="tabPlanCount" hidden></span></button>
+    <button type="button" data-act="go" data-go="meer" class="tab">Voortgang</button>
+  </nav>
+
+  <section id="v-lijst" class="view">
+    <div class="searchbox">
+      <label class="sr" for="q">Zoek op naam of plaats</label>
+      <input id="q" type="search" placeholder="Zoek op naam of plaats, bv. Franeker" autocomplete="off">
+    </div>
+    <div class="seg" role="group" aria-label="Toon">
+      <button type="button" data-act="status" data-status="all">Alles</button>
+      <button type="button" data-act="status" data-status="todo">Nog te doen</button>
+      <button type="button" data-act="status" data-status="done">Bezocht</button>
+      <button type="button" data-act="status" data-status="plan">Gepland</button>
+    </div>
+    <div class="field">
+      <label for="region">Regio</label>
+      <select id="region"></select>
+    </div>
+    <details class="themes" id="themes" open>
+      <summary><span>Thema's</span> <button type="button" class="link" data-act="cats-all" id="catsAll" hidden>Alles tonen</button></summary>
+      <div id="catGrid" class="catgrid"></div>
+    </details>
+    <div class="listhead"><strong id="resultCount"></strong> <button type="button" class="link" data-act="reset" id="resetBtn" hidden>Filters wissen</button></div>
+    <div id="list" class="list"></div>
+  </section>
+
+  <section id="v-plan" class="view">
+    <form id="customForm" class="card addplan">
+      <h2>Eigen plan toevoegen</h2>
+      <p class="hint">Voor iets dat niet op de kaart staat. Een plek van de kaart plan je in door erop te tikken.</p>
+      <div class="formrow">
+        <label class="sr" for="customDate">Datum</label>
+        <input id="customDate" type="date" required>
+        <label class="sr" for="customText">Wat ga je doen?</label>
+        <input id="customText" type="text" placeholder="Wat ga je doen?" maxlength="120" required>
+        <button type="submit" class="btn primary">Toevoegen</button>
+      </div>
+    </form>
+    <div id="planList"></div>
+  </section>
+
+  <section id="v-meer" class="view">
+    <div id="progress"></div>
+    <div class="card">
+      <h2>Back-up</h2>
+      <p class="hint">Je vinkjes en planning staan alleen op dit apparaat, in deze browser. Bewaar een back-up om ze over te zetten naar een ander apparaat of om ze niet kwijt te raken.</p>
+      <div class="btnrow">
+        <button type="button" class="btn" data-act="export">Back-up opslaan</button>
+        <button type="button" class="btn" data-act="import">Back-up terugzetten</button>
+        <input id="importFile" type="file" accept="application/json,.json" hidden>
+      </div>
+      <button type="button" class="link danger" data-act="wipe">Alles wissen</button>
+    </div>
+    <div class="card">
+      <h2>Legenda</h2>
+      <ul class="legend">
+        <li><span class="lg star">★</span> Must-see</li>
+        <li><span class="lg unesco">UNESCO</span> Werelderfgoed</li>
+        <li><span class="lg">👪</span> Bijzonder geschikt voor kinderen</li>
+        <li><span class="lg bdg-done">✓</span> Bezocht of gedaan</li>
+        <li><span class="lg bdg-plan">16</span> Gepland, met de dag van de maand</li>
+        <li><span class="lg line"></span> Wandelroute. Tik op de lijn om hem uit te lichten.</li>
+      </ul>
+    </div>
+    <div class="card about">
+      <h2>Over deze kaart</h2>
+      <p>Openingstijden, prijzen en data veranderen. Controleer ze op de website van de plek voordat je gaat. Plekken met het label <em>status niet gecontroleerd</em> komen uit een oudere lijst.</p>
+      <p>Kaart en routelijnen: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bijdragers, routes via <a href="https://hiking.waymarkedtrails.org" target="_blank" rel="noopener">Waymarked Trails</a>. Wadlopen kan alleen met een erkende gids.</p>
+    </div>
+  </section>
+</aside>
+
+<main id="mapwrap">
+  <div id="map" aria-label="Kaart van Friesland"></div>
+  <div id="chips" class="chips" aria-label="Thema's"></div>
+  <button type="button" id="locate" class="fab" data-act="locate" title="Mijn locatie" aria-label="Mijn locatie">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+  <button type="button" id="home" class="fab" data-act="home" title="Heel Friesland" aria-label="Toon heel Friesland">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <article id="detail" class="detail" hidden aria-live="polite"></article>
+</main>
+
+<nav id="bottomnav" aria-label="Navigatie">
+  <button type="button" data-act="go" data-go="kaart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5L9 4zM9 4v13.5M15 6.5V20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Kaart</span></button>
+  <button type="button" data-act="go" data-go="lijst"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="3.5" cy="6" r="1.4" fill="currentColor"/><circle cx="3.5" cy="12" r="1.4" fill="currentColor"/><circle cx="3.5" cy="18" r="1.4" fill="currentColor"/></svg><span>Lijst</span></button>
+  <button type="button" data-act="go" data-go="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Planning</span><i class="dot" id="navPlanDot" hidden></i></button>
+  <button type="button" data-act="go" data-go="meer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span>Voortgang</span></button>
+</nav>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="vendor/markercluster/leaflet.markercluster.js"></script>
+<script src="data/places.js"></script>
+<script src="data/routes.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
